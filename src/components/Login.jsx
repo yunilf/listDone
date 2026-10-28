@@ -24,7 +24,7 @@ export default function Login({ onSwitchToRegister }) {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      setError('Error al iniciar sesión con Google.');
+      setError('Error con Google: ' + err.message);
       console.error(err);
     }
   };
@@ -57,7 +57,7 @@ export default function Login({ onSwitchToRegister }) {
               value={password} 
               onChange={(e) => setPassword(e.target.value)} 
               required 
-              placeholder="••••••••"
+              placeholder="********"
             />
           </div>
           <button type="submit" className="btn btn-primary btn-block">
@@ -67,13 +67,13 @@ export default function Login({ onSwitchToRegister }) {
 
         <div className="auth-divider">o</div>
 
-        <button onClick={handleGoogleLogin} className="btn btn-secondary btn-block" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <button onClick={handleGoogleLogin} className="btn btn-secondary btn-block" style={{display: 'flex', alignItemás: 'center', justifyContent: 'center'}}>
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{width: 18, marginRight: 8}}/>
           Continuar con Google
         </button>
 
         <div className="auth-footer">
-          ¿No tienes cuenta? <button type="button" className="btn-link" onClick={onSwitchToRegister}>Regístrate aquí</button>
+          ¿No tienes cuenta? <button type="button" className="btn-link" onClick={onSwitchToRegister}>Regístrate aquíí</button>
         </div>
       </div>
     </div>

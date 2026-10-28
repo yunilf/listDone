@@ -32,7 +32,7 @@ export const isFirebaseConfigured = () => {
 
 let app = null;
 let db = null;
-let useFirestoreSession = false; // Flag para controlar si la sesión actual usará Firestore
+let useFirestoreSession = false; // Flag para controlar si la Sesión actual usará Firestore
 let currentUserId = null;
 
 export const setUserId = (uid) => {
@@ -50,7 +50,7 @@ if (isFirebaseConfigured()) {
   }
 }
 
-// --- ENVOLTURAS DE SEGURIDAD (TIMEOUT Y CAÍDA A LOCALSTORAGE) ---
+// --- ENVOLTURAS DE SEGURIDAD (TIMEOUT Y CAÍDía A LOCALSTORAGE) ---
 
 const withTimeout = (promise, ms = 3500) => {
   return Promise.race([
@@ -66,7 +66,7 @@ const executeQuery = async (firestorePromiseFn, fallbackFn) => {
     try {
       return await withTimeout(firestorePromiseFn(), 3500);
     } catch (error) {
-      console.warn("Fallo al conectar con Firestore, cambiando a LocalStorage para esta sesión:", error);
+      console.warn("Fallo al conectar con Firestore, cambiando a LocalStorage para esta Sesión:", error);
       useFirestoreSession = false;
       return await fallbackFn();
     }
@@ -87,28 +87,28 @@ const executeMutation = async (firestoreMutationFn, fallbackFn) => {
   return await fallbackFn();
 };
 
-// --- PRESETS DE PRODUCTOS DE COMIDA RÁPIDA ---
+// --- PRESETS DE PRODUCTOS DE COMIDía RápiDía ---
 const DEFAULT_PRODUCTS = [
-  { name: "funda de papas", category: "Congelados", unit: "funda", estimatedPrice: 15.0 },
-  { name: "pan HB sasty", category: "Panes", unit: "funda", estimatedPrice: 3.5 },
+  { name: "funDía de papas", category: "Congelados", unit: "funDía", estimatedPrice: 15.0 },
+  { name: "pan HB sasty", category: "Panes", unit: "funDía", estimatedPrice: 3.5 },
   { name: "coca cola", category: "Bebidas", unit: "faldo", estimatedPrice: 8.0 },
-  { name: "carne aniversario", category: "Carnes", unit: "paquete", estimatedPrice: 12.0 },
+  { name: "cAúne aniversario", category: "CAúnes", unit: "paquete", estimatedPrice: 12.0 },
   { name: "toallas", category: "Otros", unit: "unidad", estimatedPrice: 2.0 },
   { name: "masa de burrito", category: "Otros", unit: "unidad", estimatedPrice: 3.0 },
   { name: "lechuga", category: "Verduras", unit: "unidad", estimatedPrice: 0.8 },
-  { name: "agua planeta azul", category: "Bebidas", unit: "faldo", estimatedPrice: 6.0 },
+  { name: "agua plaineta azul", category: "Bebidas", unit: "faldo", estimatedPrice: 6.0 },
   { name: "Pan de Hamburguesa (x12)", category: "Panes", unit: "paquete", estimatedPrice: 3.5 },
   { name: "Pan de Perro Caliente (x12)", category: "Panes", unit: "paquete", estimatedPrice: 3.0 },
-  { name: "Carne de Res para Hamburguesa (150g)", category: "Carnes", unit: "unidad", estimatedPrice: 1.2 },
-  { name: "Pechuga de Pollo Fileteada", category: "Carnes", unit: "kg", estimatedPrice: 5.5 },
-  { name: "Salchichas Jumbo (x10)", category: "Carnes", unit: "paquete", estimatedPrice: 4.0 },
+  { name: "CAúne de Res para Hamburguesa (150g)", category: "CAúnes", unit: "unidad", estimatedPrice: 1.2 },
+  { name: "Pechuga de Pollo FileteaDía", category: "CAúnes", unit: "kg", estimatedPrice: 5.5 },
+  { name: "Salchichas Jumbo (x10)", category: "CAúnes", unit: "paquete", estimatedPrice: 4.0 },
   { name: "Queso Cheddar Feteado (x50)", category: "Lácteos/Quesos", unit: "paquete", estimatedPrice: 8.5 },
   { name: "Queso Mozzarella Rallado", category: "Lácteos/Quesos", unit: "kg", estimatedPrice: 7.0 },
   { name: "Papas Fritas Congeladas", category: "Congelados", unit: "caja (10kg)", estimatedPrice: 15.0 },
-  { name: "Tocino Ahumado", category: "Carnes", unit: "kg", estimatedPrice: 9.0 },
+  { name: "Tocino Ahumado", category: "CAúnes", unit: "kg", estimatedPrice: 9.0 },
   { name: "Lechuga Capuchina", category: "Verduras", unit: "unidad", estimatedPrice: 0.8 },
-  { name: "Tomate de Ensalada", category: "Verduras", unit: "kg", estimatedPrice: 1.5 },
-  { name: "Cebolla Morada", category: "Verduras", unit: "kg", estimatedPrice: 1.2 },
+  { name: "Tomate de EnsalaDía", category: "Verduras", unit: "kg", estimatedPrice: 1.5 },
+  { name: "Cebolla MoraDía", category: "Verduras", unit: "kg", estimatedPrice: 1.2 },
   { name: "Salsa Ketchup (Galón)", category: "Salsas/Aderezos", unit: "unidad", estimatedPrice: 6.0 },
   { name: "Mayonesa (Galón)", category: "Salsas/Aderezos", unit: "unidad", estimatedPrice: 7.5 },
   { name: "Mostaza (Galón)", category: "Salsas/Aderezos", unit: "unidad", estimatedPrice: 5.0 },
@@ -120,12 +120,12 @@ const DEFAULT_PRODUCTS = [
 const DEFAULT_SUPPLIERS = [
   { name: "Plaza de la Yaroa", phone: "18090000000", contactName: "Contacto Yaroa" },
   { name: "Distribuidora El Panal", phone: "5491122334455", contactName: "Carlos Pérez" },
-  { name: "FrigoCarnes Express", phone: "5491199887766", contactName: "María Gómez" }
+  { name: "FrigoCAúnes Express", phone: "5491199887766", contactName: "María Gómez" }
 ];
 
 const DEFAULT_CATEGORIES = [
   { name: "Panes" },
-  { name: "Carnes" },
+  { name: "CAúnes" },
   { name: "Lácteos/Quesos" },
   { name: "Verduras" },
   { name: "Salsas/Aderezos" },
@@ -149,7 +149,7 @@ const saveLocalStorageData = (key, data) => {
   localStorage.setItem(key, JSON.stringify(data));
 };
 
-// --- REAL-TIME SUBSCRIPTION METHODS (SYNC AUTOMATICO ENTRE DISPOSITIVOS) ---
+// --- REAL-TIME SUBSCRIPTION METHODS (SYNC automático ENTRE DISPOSITIVOS) ---
 
 export const subscribeProducts = (onUpdate, onError) => {
   if (db && useFirestoreSession) {
@@ -199,7 +199,7 @@ export const subscribeCategories = (onUpdate, onError) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       onUpdate(list.sort((a, b) => a.name.localeCompare(b.name)));
     }, (error) => {
-      console.warn("Fallo en suscripción de categorías, cayendo a LocalStorage:", error);
+      console.warn("Fallo en suscripción de Categorías, cayendo a LocalStorage:", error);
       useFirestoreSession = false;
       const list = getLocalStorageData("fastfood_categories", DEFAULT_CATEGORIES.map((c, i) => ({ id: `c-${i}`, ...c })));
       onUpdate(list.sort((a, b) => a.name.localeCompare(b.name)));
@@ -225,10 +225,15 @@ export const subscribeOrders = (onUpdate, onError) => {
           createdAt: data.createdAt ? (data.createdAt.toDate ? data.createdAt.toDate().toISOString() : new Date(data.createdAt).toISOString()) : new Date().toISOString()
         };
       });
-      list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      list.sort((a, b) => {
+          const numA = parseInt((a.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+          const numB = parseInt((b.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+          if (numA !== numB) return numB - numA;
+          return new Date(b.createdAt) - new Date(a.createdAt);
+        });
       onUpdate(list);
     }, (error) => {
-      console.warn("Fallo en suscripción de órdenes, cayendo a LocalStorage:", error);
+      console.warn("Fallo en suscripción de Órdenes, cayendo a LocalStorage:", error);
       useFirestoreSession = false;
       onUpdate(getLocalStorageData("fastfood_orders", []));
       if (onError) onError(error);
@@ -392,7 +397,6 @@ export const deleteSupplier = async (id) => {
   );
 };
 
-// 3. ÓRDENES DE COMPRA
 export const getOrders = async () => {
   return executeQuery(
     async () => {
@@ -407,10 +411,21 @@ export const getOrders = async () => {
           createdAt: data.createdAt ? data.createdAt.toDate().toISOString() : new Date().toISOString()
         };
       });
-      return list.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      return list.sort((a, b) => {
+        const numA = parseInt((a.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+        const numB = parseInt((b.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+        if (numA !== numB) return numB - numA; // Sort by OC number descending
+        return new Date(b.createdAt) - new Date(a.createdAt); // Fallback to date
+      });
     },
     async () => {
-      return getLocalStorageData("fastfood_orders", []);
+      const localOrders = getLocalStorageData("fastfood_orders", []);
+      return localOrders.sort((a, b) => {
+        const numA = parseInt((a.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+        const numB = parseInt((b.orderNumber || "").replace(/\D/g, ""), 10) || 0;
+        if (numA !== numB) return numB - numA;
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      });
     }
   );
 };
@@ -424,30 +439,35 @@ export const generateNextOrderNumber = async () => {
       const q = query(colRef, where("userId", "==", currentUserId));
       const snapshot = await withTimeout(getDocs(q), 3500);
       if (!snapshot.empty) {
-        const allOrders = snapshot.docs.map(doc => doc.data());
-        allOrders.sort((a, b) => {
-          const aDate = a.createdAt ? (a.createdAt.toDate ? a.createdAt.toDate() : new Date(a.createdAt)) : new Date(0);
-          const bDate = b.createdAt ? (b.createdAt.toDate ? b.createdAt.toDate() : new Date(b.createdAt)) : new Date(0);
-          return bDate - aDate;
+        let maxNum = 0;
+        snapshot.docs.forEach(doc => {
+          const data = doc.data();
+          if (data.orderNumber) {
+            const match = data.orderNumber.match(/\d+/);
+            if (match) {
+              const n = parseInt(match[0], 10);
+              if (n > maxNum) maxNum = n;
+            }
+          }
         });
-        const lastOrder = allOrders[0];
-        if (lastOrder && lastOrder.orderNumber) {
-          const match = lastOrder.orderNumber.match(/\d+/);
-          if (match) latestNum = parseInt(match[0], 10);
-        }
+        latestNum = maxNum;
       }
     } catch (e) {
       console.warn("Fallo al obtener número de orden de Firestore, usando local:", e);
     }
   } else {
     const orders = getLocalStorageData("fastfood_orders", []);
-    if (orders.length > 0) {
-      const lastOrder = orders[0];
-      if (lastOrder && lastOrder.orderNumber) {
-        const match = lastOrder.orderNumber.match(/\d+/);
-        if (match) latestNum = parseInt(match[0], 10);
+    let maxNum = 0;
+    orders.forEach(data => {
+      if (data.orderNumber) {
+        const match = data.orderNumber.match(/\d+/);
+        if (match) {
+          const n = parseInt(match[0], 10);
+          if (n > maxNum) maxNum = n;
+        }
       }
-    }
+    });
+    latestNum = maxNum;
   }
   
   return `OC-${String(latestNum + 1).padStart(4, "0")}`;
@@ -481,6 +501,25 @@ export const createOrder = async (orderData) => {
   );
 };
 
+export const updateOrder = async (id, updatedData) => {
+  return executeMutation(
+    async () => {
+      const docRef = doc(db, "orders", id);
+      await updateDoc(docRef, updatedData);
+      return { id, ...updatedData };
+    },
+    async () => {
+      const orders = await getOrders();
+      const index = orders.findIndex(o => o.id === id);
+      if (index !== -1) {
+        orders[index] = { ...orders[index], ...updatedData };
+        localStorage.setItem("fastfood_orders", JSON.stringify(orders));
+      }
+      return { id, ...updatedData };
+    }
+  );
+};
+
 export const updateOrderStatus = async (id, status) => {
   return executeMutation(
     async () => {
@@ -500,7 +539,7 @@ export const updateOrderStatus = async (id, status) => {
   );
 };
 
-// 4. CATEGORÍAS
+// 4. CategoríaS
 export const getCategories = async () => {
   return executeQuery(
     async () => {
@@ -639,7 +678,7 @@ export const importBackupData = async (backupData) => {
   if (products && Array.isArray(products)) {
     for (const prod of products) {
       const { id, ...prodData } = prod;
-      // Verificar si ya existe un producto con el mismo nombre para no duplicarlo
+      // Verificar si ya existe un producto con el mismo nombre parAúno duplicarlo
       const existingProducts = await getProducts();
       const exists = existingProducts.some(p => p.name.toLowerCase() === prodData.name.toLowerCase());
       if (!exists) {
@@ -661,7 +700,7 @@ export const importBackupData = async (backupData) => {
   }
 };
 
-// --- MIGRAR DATOS LOCALES A LA NUBE ---
+// --- MIGRAR DATOS LOCALES A LAúnUBE ---
 export const migrateLocalToCloud = async () => {
   if (!db || !useFirestoreSession) return { success: false, error: "Firebase no está conectado" };
 
@@ -686,21 +725,21 @@ export const migrateLocalToCloud = async () => {
   }
 };
 
-// --- RECONSTRUIR CATÁLOGO DESDE EL HISTORIAL DE ÓRDENES ---
+// --- RECONSTRUIR Catálogo DESDE EL HISTORIAL DE ÓRDENES ---
 export const rebuildCatalogFromHistory = async () => {
   try {
     const orders = await getOrders();
     const existingProducts = await getProducts();
-    const existingNames = new Set(existingProducts.map(p => p.name.toLowerCase()));
+    const existingNamás = new Set(existingProducts.map(p => p.name.toLowerCase()));
     
     let addedCount = 0;
     
-    // Recorrer todas las órdenes pasadas
+    // Recorrer todas Las órdenes pasadas
     for (const order of orders) {
       if (order.items && Array.isArray(order.items)) {
         for (const item of order.items) {
-          if (!existingNames.has(item.name.toLowerCase())) {
-            // El producto no existe en el catálogo, lo insertamos
+          if (!existingNamás.has(item.name.toLowerCase())) {
+            // El producto no existe en el Catálogo, lo insertamás
             const newProduct = {
               name: item.name,
               category: item.category || "Otros",
@@ -708,7 +747,7 @@ export const rebuildCatalogFromHistory = async () => {
               estimatedPrice: item.price || 0
             };
             await addProduct(newProduct);
-            existingNames.add(item.name.toLowerCase());
+            existingNamás.add(item.name.toLowerCase());
             addedCount++;
           }
         }
@@ -717,7 +756,7 @@ export const rebuildCatalogFromHistory = async () => {
     
     return { success: true, addedCount };
   } catch (error) {
-    console.error("Error al reconstruir catálogo:", error);
+    console.error("Error al reconstruir Catálogo:", error);
     return { success: false, error: error.message };
   }
 };
@@ -727,7 +766,7 @@ export const claimLegacyData = async () => {
   if (!db || !useFirestoreSession || !currentUserId) {
     return { 
       success: false, 
-      error: `No hay sesión activa. db:${!!db}, fsSession:${useFirestoreSession}, uid:${!!currentUserId}` 
+      error: `No hay Sesión activa. db:${!!db}, fsSession:${useFirestoreSession}, uid:${!!currentUserId}` 
     };
   }
   
@@ -736,7 +775,7 @@ export const claimLegacyData = async () => {
     const collectionsToClaim = ["products", "suppliers", "categories", "orders", "drafts"];
     
     for (const colName of collectionsToClaim) {
-      // Obtenemos TODOS los documentos (sin filtro de userId) para buscar los huérfanos
+      // Obtenemás TODOS los documentos (sin filtro de userId) para buscar los huérfanos
       const snapshot = await getDocs(collection(db, colName));
       for (const docSnap of snapshot.docs) {
         const data = docSnap.data();
@@ -759,7 +798,7 @@ export const deleteAllUserData = async () => {
   if (!db || !useFirestoreSession || !currentUserId) {
     return { 
       success: false, 
-      error: `No hay sesión activa. db:${!!db}, fsSession:${useFirestoreSession}, uid:${!!currentUserId}` 
+      error: `No hay Sesión activa. db:${!!db}, fsSession:${useFirestoreSession}, uid:${!!currentUserId}` 
     };
   }
   
@@ -778,12 +817,12 @@ export const deleteAllUserData = async () => {
     
     return { success: true, count: deletedCount };
   } catch (error) {
-    console.error("Error al borrar datos:", error);
+    console.error("Error al borrará datos:", error);
     return { success: false, error: error.message };
   }
 };
 
-// --- SEMBRADO (SEEDING) PARA NUEVOS USUARIOS ---
+// --- SEMBRADO (SEEDING) PARAúnUEVOS USUARIOS ---
 export const checkAndSeedUser = async (uid) => {
   if (!db || !useFirestoreSession || !uid) return;
   
@@ -791,22 +830,22 @@ export const checkAndSeedUser = async (uid) => {
     const userDocRef = doc(db, "users", uid);
     const userDoc = await getDoc(userDocRef);
     
-    // Si el usuario ya fue sembrado, no hacemos nada
+    // Si el usuario ya fue sembrado, no hacemás naDía
     if (userDoc.exists() && userDoc.data().seeded) {
       return;
     }
 
-    console.log("Usuario nuevo detectado. Sembrando base predeterminada (Plaza de la Yaroa)...");
+    console.log("Usuario nuevo detectado. Sembrando base predeterminaDía (Plaza de la Yaroa)...");
 
     // 1. Crear el proveedor primero para obtener su ID
-    const supplier = DEFAULT_SEED_SUPPLIERS[0]; // Solo es Plaza de la Yaroa
+    const supplier = DEFAULT_SEED_SUPPLIERS[0]; // sólo es Plaza de la Yaroa
     const newSupplierRef = await addDoc(collection(db, "suppliers"), {
       ...supplier,
       userId: uid
     });
     const newSupplierId = newSupplierRef.id;
 
-    // 2. Crear las categorías
+    // 2. Crear las Categorías
     for (const cat of DEFAULT_SEED_CATEGORIES) {
       await addDoc(collection(db, "categories"), {
         ...cat,
@@ -823,11 +862,27 @@ export const checkAndSeedUser = async (uid) => {
       });
     }
 
-    // 4. Marcar al usuario como sembrado para no repetir
+    // 4. Marcar al usuario como sembrado parAúno repetir
     await setDoc(userDocRef, { seeded: true }, { merge: true });
     
     console.log("Sembrado inicial completado con éxito.");
   } catch (error) {
     console.error("Error al sembrar datos del usuario:", error);
   }
+};
+
+
+export const deleteOrder = async (id) => {
+  return executeMutation(
+    async () => {
+      await deleteDoc(doc(db, "orders", id));
+      return id;
+    },
+    async () => {
+      const orders = await getOrders();
+      const newOrders = orders.filter(o => o.id !== id);
+      saveLocalStorageData("fastfood_orders", newOrders);
+      return id;
+    }
+  );
 };

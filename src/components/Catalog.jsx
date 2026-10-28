@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Plus, Trash2, Edit2, Search, Package, Tag, Check, X, Folder } from "lucide-react";
 
-// Colores consistentes para categorías dinámicas
+// Colores consistentes para Categorías dinámicas
 const CATEGORY_COLORS = [
   "#ff9f1c", // Naranja / Queso
-  "#e71d36", // Rojo / Carnes
+  "#e71d36", // Rojo / CAúnes
   "#2ec4b6", // Verde azulado / Fresco
   "#ffd166", // Amarillo / Lácteos
   "#00b4d8", // Celeste / Bebidas
@@ -35,7 +35,8 @@ export default function Catalog({
   onAddCategory,
   onUpdateCategory,
   onDeleteCategory,
-  suppliers = []
+  suppliers = [],
+  showDecimals = true
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCatModalOpen, setIsCatModalOpen] = useState(false);
@@ -45,11 +46,18 @@ export default function Catalog({
   const [unit, setUnit] = useState("unidad");
   const [estimatedPrice, setEstimatedPrice] = useState("");
   const [supplierId, setSupplierId] = useState("");
+  const [supplierPrices, setSupplierPrices] = useState({});
 
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("Todos");
 
-  // Estado para gestión de categorías en el sub-modal
+  const formatPrice = (val) => {
+    if (!val && val !== 0) return "";
+    return showDecimals ? val.toFixed(2) : Math.round(val).toString();
+  };
+
+
+  // Estado para gestión de Categorías en el sub-modal
   const [newCatName, setNewCatName] = useState("");
   const [editingCatId, setEditingCatId] = useState(null);
   const [editingCatName, setEditingCatName] = useState("");
@@ -61,6 +69,7 @@ export default function Catalog({
     setUnit("unidad");
     setEstimatedPrice("");
     setSupplierId("");
+    setSupplierPrices({});
     setIsModalOpen(true);
   };
 
@@ -71,6 +80,13 @@ export default function Catalog({
     setUnit(product.unit || "unidad");
     setEstimatedPrice(product.estimatedPrice || "");
     setSupplierId(product.supplierId || "");
+    let initPrices = {};
+    if (product.supplierPrices) {
+      initPrices = { ...product.supplierPrices };
+    } else if (product.supplierId) {
+      initPrices[product.supplierId] = product.estimatedPrice || 0;
+    }
+    setSupplierPrices(initPrices);
     setIsModalOpen(true);
   };
 
@@ -83,7 +99,8 @@ export default function Catalog({
       category: category || categories[0]?.name || "Otros",
       unit,
       estimatedPrice: estimatedPrice ? parseFloat(estimatedPrice) : 0,
-      supplierId: supplierId || ""
+      supplierId: supplierId || "",
+      supplierPrices: supplierPrices
     };
 
     if (editingProduct) {
@@ -102,7 +119,7 @@ export default function Catalog({
     // Evitar nombres duplicados
     const exists = categories.some(c => c.name.toLowerCase() === newCatName.trim().toLowerCase());
     if (exists) {
-      alert("Ya existe una categoría con ese nombre.");
+      alert("Ya existe una Categoría con ese nombre.");
       return;
     }
 
@@ -121,7 +138,7 @@ export default function Catalog({
     // Evitar duplicados con otros ids
     const exists = categories.some(c => c.id !== id && c.name.toLowerCase() === editingCatName.trim().toLowerCase());
     if (exists) {
-      alert("Ya existe otra categoría con ese nombre.");
+      alert("Ya existe otra Categoría con ese nombre.");
       return;
     }
 
@@ -130,7 +147,7 @@ export default function Catalog({
     setEditingCatId(null);
   };
 
-  // Filtrado y búsqueda de productos
+  // Filtrado y búsqueDía de productos
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = selectedCategory === "Todos" || 
@@ -143,8 +160,8 @@ export default function Catalog({
     <div className="catalog-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Catálogo de Productos</h1>
-          <p className="page-subtitle">Gestiona la lista base de insumos para armar tus compras</p>
+          <h1 className="page-title">Productos</h1>
+          <p className="page-subtitle">Gestiona la lista base de insumás para armar tus compras</p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
           <button className="btn btn-secondary" onClick={() => setIsCatModalOpen(true)}>
@@ -159,7 +176,7 @@ export default function Catalog({
       </div>
 
       <div style={{ marginTop: "2rem", minWidth: 0, width: "100%" }}>
-        {/* Barra de búsqueda */}
+        {/* Barra de búsqueDía */}
         <div className="search-filter-bar" style={{ marginBottom: "1rem" }}>
           <div className="search-input-wrapper">
             <Search />
@@ -173,7 +190,7 @@ export default function Catalog({
           </div>
         </div>
 
-        {/* Filtro rápido de categorías en scroll horizontal */}
+        {/* Filtro rápido de Categorías en scroll horizontal */}
         <div className="category-filter-scroll">
           <div
             className={`filter-badge ${selectedCategory === "Todos" ? "active" : ""}`}
@@ -195,48 +212,51 @@ export default function Catalog({
         {filteredProducts.length === 0 ? (
           <div className="empty-state" style={{ marginTop: "1.5rem" }}>
             <Package size={48} />
-            <h3>No se encontraron insumos</h3>
-            <p>Prueba buscando con otro término o agrega un nuevo producto al catálogo.</p>
+            <h3>No se encontraron insumás</h3>
+            <p>Prueba buscando con otro término o agrega un nuevo producto al Catálogo.</p>
           </div>
         ) : (
           <div className="catalog-list" style={{ marginTop: "1.5rem" }}>
             {filteredProducts.map((product) => {
               const borderCol = getCategoryColor(product.category);
-              const assignedSupplier = suppliers.find(s => s.id === product.supplierId);
-              
-              return (
-                <div 
-                  key={product.id} 
-                  className="product-item"
-                  style={{ borderLeft: `4px solid ${borderCol}` }}
-                >
-                  <div className="product-info">
-                    <span className="product-name">{product.name}</span>
-                    <div className="product-meta">
-                      <span className="category-tag" style={{ borderLeft: `none`, paddingLeft: "0", color: borderCol, fontWeight: 700 }}>
-                        {product.category}
-                      </span>
-                      <span className="meta-dot"></span>
-                      <span>1 {product.unit}</span>
-                      {product.estimatedPrice > 0 && (
-                        <>
-                          <span className="meta-dot"></span>
-                          <span style={{ color: "var(--primary)", fontWeight: 600 }}>
-                            ${product.estimatedPrice.toFixed(2)}
-                          </span>
-                        </>
-                      )}
+              const productSuppliers = suppliers.filter(s => 
+                  (product.supplierPrices && product.supplierPrices.hasOwnProperty(s.id)) || 
+                  product.supplierId === s.id
+                );
+                
+                return (
+                  <div 
+                    key={product.id} 
+                    className="catalog-card"
+                    style={{ borderLeft: `4px solid ${borderCol}` }}
+                  >
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: "1.05rem", fontWeight: 700, color: "var(--text-main)", marginBottom: "0.2rem" }}>
+                        {product.name}
+                      </h3>
+                      <div className="catalog-meta">
+                        <span>{product.category}</span>
+                        <span className="meta-dot"></span>
+                        <span>{product.unit}</span>
+                        <span className="meta-dot"></span>
+                        <span style={{ fontWeight: 600, color: "var(--text-main)" }}>
+                          ${product.estimatedPrice} (Ref)
+                        </span>
+                      </div>
                       
-                      {assignedSupplier && (
-                        <>
-                          <span className="meta-dot"></span>
-                          <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(46, 196, 182, 0.1)", color: "var(--success)", padding: "2px 6px", borderRadius: "4px", fontWeight: 600 }}>
-                            🛒 {assignedSupplier.name}
-                          </span>
-                        </>
+                      {productSuppliers.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
+                          {productSuppliers.map(assignedSupplier => {
+                            const price = product.supplierPrices?.[assignedSupplier.id] ?? product.estimatedPrice;
+                            return (
+                              <span key={assignedSupplier.id} style={{ fontSize: "0.75rem", backgroundColor: "rgba(46, 196, 182, 0.1)", color: "var(--success)", padding: "2px 6px", borderRadius: "4px", fontWeight: 600 }}>
+                                {assignedSupplier.name} (${price})
+                              </span>
+                            );
+                          })}
+                        </div>
                       )}
                     </div>
-                  </div>
                   <div style={{ display: "flex", gap: "0.4rem" }}>
                     <button className="btn btn-secondary btn-icon-only" onClick={() => openEditModal(product)} title="Editar">
                       <Edit2 size={13} />
@@ -252,7 +272,7 @@ export default function Catalog({
         )}
       </div>
 
-      {/* MODAL GESTIONAR CATEGORÍAS */}
+      {/* MODAL GESTIONAR CategoríaS */}
       {isCatModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: "450px" }}>
@@ -280,7 +300,7 @@ export default function Catalog({
               </button>
             </form>
 
-            {/* Listado de categorías */}
+            {/* Listado de Categorías */}
             <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", maxHeight: "300px", overflowY: "auto", paddingRight: "0.25rem" }}>
               {categories.map((cat) => {
                 const isEditing = editingCatId === cat.id;
@@ -384,7 +404,7 @@ export default function Catalog({
                   <label className="form-label">Categoría</label>
                   {categories.length === 0 ? (
                     <div style={{ color: "var(--secondary)", fontSize: "0.85rem" }}>
-                      ⚠️ Debes crear al menos una categoría primero.
+                      ⚠️ Debes crear al menos una Categoría primero.
                     </div>
                   ) : (
                     <select
@@ -416,7 +436,7 @@ export default function Catalog({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Precio Referencial Est. ($) - Opcional</label>
+                <label className="form-label">Precio Referencial Est. ($) - opciónal</label>
                 <input
                   type="number"
                   step="0.01"
@@ -428,20 +448,52 @@ export default function Catalog({
               </div>
 
               <div className="form-group">
-                <label className="form-label">Proveedor Asignado</label>
-                <select
-                  className="form-input"
-                  value={supplierId}
-                  onChange={(e) => setSupplierId(e.target.value)}
-                  style={{ appearance: "none", backgroundImage: "url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%238a99ad%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')", backgroundRepeat: "no-repeat", backgroundPosition: "right 12px top 50%", backgroundSize: "12px auto", paddingRight: "30px" }}
-                >
-                  <option value="">Sin proveedor específico (General)</option>
-                  {suppliers.map(s => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
+                <label className="form-label">Proveedores Asignados y Precios</label>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem', backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px' }}>
+                    {suppliers.length === 0 && <span style={{fontSize: '0.8rem', color: 'var(--text-muted)'}}>No hay proveedores registrados.</span>}
+                    {suppliers.map(s => {
+                      const isSelected = supplierPrices.hasOwnProperty(s.id);
+                      return (
+                        <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <input 
+                            type="checkbox" 
+                            checked={isSelected}
+                            onChange={(e) => {
+                               const newPrices = { ...supplierPrices };
+                               if (e.target.checked) {
+                                  newPrices[s.id] = estimatedPrice ? parseFloat(estimatedPrice) : 0;
+                               } else {
+                                  delete newPrices[s.id];
+                               }
+                               setSupplierPrices(newPrices);
+                            }}
+                            style={{ accentColor: 'var(--primary)', width: '16px', height: '16px', cursor: 'pointer' }}
+                          />
+                          <span style={{ flex: 1, fontSize: '0.9rem', color: isSelected ? 'var(--text-main)' : 'var(--text-muted)' }}>{s.name}</span>
+                          {isSelected && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>$</span>
+                              <input 
+                                type="number"
+                                className="form-input"
+                                style={{ width: '80px', padding: '0.3rem 0.5rem', height: 'auto', fontSize: '0.9rem' }}
+                                value={supplierPrices[s.id] === 0 ? '' : supplierPrices[s.id]}
+                                onChange={(e) => {
+                                   const val = e.target.value === '' ? 0 : parseFloat(e.target.value);
+                                   setSupplierPrices({ ...supplierPrices, [s.id]: val });
+                                }}
+                                placeholder="Precio"
+                                min="0"
+                                step="0.01"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
                 <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem", display: "block" }}>
-                  Asocia este producto a un proveedor para que solo aparezca en su lista de compras.
+                  Asocia este producto a un proveedor para que sólo aparezca en su lista de compras.
                 </span>
               </div>
 

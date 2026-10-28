@@ -28,7 +28,7 @@ export default function Suppliers({ suppliers, onAdd, onDelete, onUpdate }) {
     e.preventDefault();
     if (!name || !phone) return;
 
-    // Limpiar el número de teléfono para WhatsApp: solo números, sin +, espacios o guiones
+    // Limpiar el número de teléfono para WhatsApp: sólo números, sin +, espacios o guiones
     const cleanPhone = phone.replace(/\D/g, "");
 
     const supplierData = {
@@ -50,8 +50,8 @@ export default function Suppliers({ suppliers, onAdd, onDelete, onUpdate }) {
     <div className="suppliers-container">
       <div className="page-header">
         <div>
-          <h1 className="page-title">Directorio de Proveedores</h1>
-          <p className="page-subtitle">Gestiona los contactos de WhatsApp para tus órdenes de compra</p>
+          <h1 className="page-title">Proveedores</h1>
+          <p className="page-subtitle">Gestiona los contactos de WhatsApp para tusÓrdenes de Compra</p>
         </div>
         <button className="btn btn-primary" onClick={openAddModal}>
           <Plus size={18} />
@@ -64,7 +64,7 @@ export default function Suppliers({ suppliers, onAdd, onDelete, onUpdate }) {
           <div className="empty-state">
             <User size={48} />
             <h3>No hay proveedores registrados</h3>
-            <p>Registra tus proveedores para poder enviarles órdenes de compra por WhatsApp.</p>
+            <p>Registra tus proveedores para poder envíarlesÓrdenes de Compra por WhatsApp.</p>
             <button className="btn btn-secondary" onClick={openAddModal}>
               Agregar primer proveedor
             </button>
@@ -121,7 +121,7 @@ export default function Suppliers({ suppliers, onAdd, onDelete, onUpdate }) {
                 <input
                   type="text"
                   className="form-input"
-                  placeholder="Ej. Frigocarnes Express"
+                  placeholder="Ej. FrigocAúnes Express"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
@@ -129,7 +129,7 @@ export default function Suppliers({ suppliers, onAdd, onDelete, onUpdate }) {
               </div>
 
               <div className="form-group">
-                <label className="form-label">Nombre del Contacto (Opcional)</label>
+                <label className="form-label">Nombre del Contacto (opciónal)</label>
                 <input
                   type="text"
                   className="form-input"

@@ -16,16 +16,9 @@ const getCategoryColor = (name) => {
   return CATEGORY_COLORS[index];
 };
 
-export default function ActiveList({ 
-  products, 
-  suppliers, 
-  drafts = [], 
-  onSaveDraft, 
-  onDeleteDraft, 
-  onCreateOrder, 
-  navigateToHistory 
-}) {
-  const [currentDraftId, setCurrentDraftId] = useState("general");
+export default function ActiveList({ products, suppliers, drafts = [], onSaveDraft, onDeleteDraft, onCreateOrder, navigateToHistory, showDecimals = true, initialDraftId = "general" }) {
+  const [currentDraftId, setCurrentDraftId] = useState(initialDraftId);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [quantities, setQuantities] = useState({});
   const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,29 +27,41 @@ export default function ActiveList({
   const [isInitialized, setIsInitialized] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+
+  const formatPrice = (val) => {
+    if (!val && val !== 0) return "";
+    return showDecimals ? val.toFixed(2) : Math.round(val).toString();
+  };
+
   // Categorías de productos para los filtros de la lista activa
   const categories = ["Todos", ...new Set(products.map(p => p.category))].filter(Boolean);
 
   // 1. Cargar borrador inicial "general" al iniciar la app
   useEffect(() => {
     if (!isInitialized && drafts.length > 0) {
-      const generalDraft = drafts.find(d => d.id === "general");
-      if (generalDraft && generalDraft.items) {
+      const draftToLoad = drafts.find(d => d.id === initialDraftId) || drafts.find(d => d.id === "general");
+      if (draftToLoad && draftToLoad.items) {
         const newQties = {};
-        generalDraft.items.forEach(item => {
+        draftToLoad.items.forEach(item => {
           newQties[item.productId] = item.quantity;
         });
         setQuantities(newQties);
       }
+      
+      // Auto-select supplier if not general
+      if (initialDraftId !== "general") {
+        setSelectedSupplierId(initialDraftId);
+      }
+      
       setIsInitialized(true);
     }
-  }, [drafts, isInitialized]);
+  }, [drafts, isInitialized, initialDraftId]);
 
   // 2. Cambiar de borrador / proveedor en el selector
   const handleSwitchDraft = (draftId) => {
     setCurrentDraftId(draftId);
     
-    // Si entramos a la lista de un proveedor específico, auto-seleccionamos ese proveedor
+    // Si entramás a la lista de un proveedor específico, auto-seleccionamás ese proveedor
     if (draftId !== "general") {
       setSelectedSupplierId(draftId);
     } else {
@@ -88,7 +93,16 @@ export default function ActiveList({
         name: product ? product.name : "Producto desconocido",
         category: product ? product.category : "Otros",
         unit: product ? product.unit : "unidad",
-        price: product ? product.estimatedPrice || 0 : 0,
+        price: (() => {
+          if (!product) return 0;
+          let p = product.estimatedPrice || 0;
+          if (currentDraftId !== "general" && product.supplierPrices && product.supplierPrices.hasOwnProperty(currentDraftId)) {
+            p = product.supplierPrices[currentDraftId];
+          } else if (selectedSupplierId && product.supplierPrices && product.supplierPrices.hasOwnProperty(selectedSupplierId)) {
+            p = product.supplierPrices[selectedSupplierId];
+          }
+          return p;
+        })(),
         quantity: qty
       };
     }).filter(item => item.quantity > 0);
@@ -99,7 +113,7 @@ export default function ActiveList({
     // Guardar borrador en Firebase / LocalStorage
     onSaveDraft(currentDraftId, items, supplierName);
     
-    // Falso retraso visual para simular la confirmación de la sincronización en la nube
+    // Falso retraso visual para simular la confirmación de la sincronización en lAúnube
     setTimeout(() => {
       setIsSaving(false);
     }, 400);
@@ -123,15 +137,15 @@ export default function ActiveList({
     });
   };
 
-  // 5. Vaciar lista activa (borrar borrador)
+  // 5. Vaciar lista activa (borrará borrador)
   const handleReset = () => {
-    if (window.confirm("¿Seguro que deseas vaciar esta lista de compras? Se eliminarán los datos guardados en la nube para esta lista.")) {
+    if (window.confirm("¿Seguro que deseas vaciar esta lista de compras? Se eliminarán los datos guardados en lAúnube para esta lista.")) {
       setQuantities({});
       onDeleteDraft(currentDraftId);
     }
   };
 
-  // Obtener productos activos de la vista seleccionada
+  // Obtener productos activos de la vista seleccionaDía
   const activeItems = Object.entries(quantities).map(([id, qty]) => {
     const product = products.find(p => p.id === id);
     return {
@@ -148,11 +162,12 @@ export default function ActiveList({
   const totalItemsCount = activeItems.reduce((acc, item) => acc + item.quantity, 0);
   const totalEstimatedCost = activeItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
-  // Filtrar catálogo base
+  // Filtrar Catálogo base
   const displayedProducts = products.filter(product => {
     // 1. Filtrar por proveedor
-    if (currentDraftId !== "general" && product.supplierId !== currentDraftId) {
-      return false;
+    if (currentDraftId !== "general") {
+      const hasSupplier = (product.supplierPrices && product.supplierPrices.hasOwnProperty(currentDraftId)) || (product.supplierId === currentDraftId);
+      if (!hasSupplier) return false;
     }
 
     const qty = quantities[product.id] || 0;
@@ -168,7 +183,8 @@ export default function ActiveList({
   });
 
   // Finalizar pedido y convertirlo en Orden de Compra formal
-  const handleFinalizeOrder = () => {
+  const handleFinalizeOrder = async () => {
+    if (isSubmitting) return;
     if (activeItems.length === 0) {
       alert("Debes agregar al menos un producto a la lista.");
       return;
@@ -189,20 +205,21 @@ export default function ActiveList({
       items: activeItems
     };
 
-    // Crear la orden de compra
-    onCreateOrder(orderData);
-    
-    // Eliminar el borrador actual de la base de datos (limpieza)
-    onDeleteDraft(currentDraftId);
-    
-    // Limpiar estado local
-    setQuantities({});
-    if (currentDraftId === "general") {
-      setSelectedSupplierId("");
+    try {
+      setIsSubmitting(true);
+      await onCreateOrder(orderData);
+      await onDeleteDraft(currentDraftId);
+      setQuantities({});
+      if (currentDraftId === "general") {
+        setSelectedSupplierId("");
+      }
+      navigateToHistory();
+    } catch (e) {
+      console.error(e);
+      alert("Error al finalizar orden");
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    alert(`¡Orden creada con éxito para ${supplier.name}!`);
-    navigateToHistory();
   };
 
   // Texto amigable para el selector de borradores que muestra las cantidades acumuladas
@@ -228,9 +245,9 @@ export default function ActiveList({
           {/* Indicador de Sincronización */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: isSaving ? "var(--primary)" : "var(--text-muted)", transition: "var(--transition-fast)" }}>
             <RefreshCw size={14} className={isSaving ? "spin" : ""} style={{ animation: isSaving ? "spin 1s linear infinite" : "none" }} />
-            <span>{isSaving ? "Guardando en la nube..." : "Sincronizado"}</span>
+            <span>{isSaving ? "Guardando en lAúnube..." : "Sincronizado"}</span>
             <style>{`
-              @keyframes spin {
+              @keyframás spin {
                 from { transform: rotate(0deg); }
                 to { transform: rotate(360deg); }
               }
@@ -272,13 +289,13 @@ export default function ActiveList({
             ))}
           </select>
           <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.4rem", display: "block" }}>
-            Los productos que añadas a esta lista se guardarán específicamente para el proveedor o lista seleccionada.
+            Los productos que añadas a esta lista se guardarán específicamente para el proveedor o lista seleccionaDía.
           </span>
         </div>
       </div>
 
       <div className="active-list-container" style={{ marginTop: "1.5rem" }}>
-        {/* COLUMNA IZQUIERDA: BUSCADOR Y LISTADO DE PRODUCTOS */}
+        {/* COLUMNA IZQUIERDía: BUSCADOR Y LISTADO DE PRODUCTOS */}
         <div style={{ display: "flex", flexDirection: "column", gap: "1rem", minWidth: 0, width: "100%" }}>
           <div className="search-filter-bar" style={{ marginBottom: "0" }}>
             <div className="search-input-wrapper">
@@ -286,7 +303,7 @@ export default function ActiveList({
               <input
                 type="text"
                 className="form-input"
-                placeholder="Buscar insumos..."
+                placeholder="Buscar insumás..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -324,7 +341,7 @@ export default function ActiveList({
               <p>
                 {showOnlySelected 
                   ? "Aún no has agregado cantidades a esta lista de compras." 
-                  : "Prueba ajustando los filtros de búsqueda."}
+                  : "Prueba ajustando los filtros de búsqueDía."}
               </p>
             </div>
           ) : (
@@ -358,10 +375,10 @@ export default function ActiveList({
                         {product.estimatedPrice > 0 && (
                           <>
                             <span className="meta-dot"></span>
-                            <span>${product.estimatedPrice.toFixed(2)}</span>
+                            <span>${formatPrice(product.estimatedPrice)}</span>
                             {qty > 0 && (
                               <span style={{ color: "var(--primary)", marginLeft: "0.25rem", fontWeight: 700 }}>
-                                (Subt: ${(product.estimatedPrice * qty).toFixed(2)})
+                                (Subt: ${formatPrice(product.estimatedPrice * qty)})
                               </span>
                             )}
                           </>
@@ -398,7 +415,7 @@ export default function ActiveList({
             </label>
             
             {currentDraftId !== "general" ? (
-              // Si ya estamos dentro de un borrador de proveedor específico, el proveedor está pre-asignado
+              // Si ya estamás dentro de un borrador de proveedor específico, el proveedor está pre-asignado
               <div 
                 className="form-input" 
                 style={{ 
@@ -413,10 +430,10 @@ export default function ActiveList({
                 {suppliers.find(s => s.id === currentDraftId)?.name || "Proveedor Específico"}
               </div>
             ) : (
-              // Si estamos en la Lista General, obligamos a seleccionar el proveedor aquí al finalizar
+              // Si estamás en la Lista General, obligamás a seleccionar el proveedor aquíí al finalizar
               suppliers.length === 0 ? (
                 <div style={{ fontSize: "0.85rem", color: "var(--secondary)", marginTop: "0.25rem" }}>
-                  ⚠️ No hay proveedores registrados. Ve a la pestaña de Proveedores para añadir uno.
+                  ⚠️¿No hay proveedores registrados. Ve a la pestaña de Proveedores para añadir uno.
                 </div>
               ) : (
                 <select
@@ -447,18 +464,18 @@ export default function ActiveList({
             </div>
             <div className="summary-total">
               <span>Total Estimado:</span>
-              <span>${totalEstimatedCost.toFixed(2)}</span>
+              <span>${formatPrice(totalEstimatedCost)}</span>
             </div>
           </div>
 
           <button
             className="btn btn-primary"
             onClick={handleFinalizeOrder}
-            disabled={activeItems.length === 0 || !selectedSupplierId}
+            disabled={activeItems.length === 0 || !selectedSupplierId || isSubmitting}
             style={{ 
               marginTop: "1rem", 
               width: "100%", 
-              opacity: (activeItems.length === 0 || !selectedSupplierId) ? 0.5 : 1,
+              opacity: (activeItems.length === 0 || !selectedSupplierId || isSubmitting) ? 0.5 : 1,
               cursor: (activeItems.length === 0 || !selectedSupplierId) ? "not-allowed" : "pointer"
             }}
           >

@@ -15,10 +15,10 @@ export const DEFAULT_SEED_CATEGORIES = [
     "name": "verduras"
   },
   {
-    "name": "panes/Guarniciones"
+    "name": "panes/GuAúniciones"
   },
   {
-    "name": "carnes"
+    "name": "cAúnes"
   },
   {
     "name": "papas"
@@ -39,38 +39,38 @@ export const DEFAULT_SEED_CATEGORIES = [
 
 export const DEFAULT_SEED_PRODUCTS = [
   {
-    "name": "agua planeta azul",
+    "name": "agua plaineta azul",
     "category": "Bebidas",
     "unit": "faldo",
     "estimatedPrice": 145
   },
   {
-    "name": "lechuga rizada",
+    "name": "lechuga rizaDía",
     "category": "verduras",
     "unit": "unidad",
     "estimatedPrice": 45
   },
   {
     "name": "masa de burrito",
-    "category": "panes/Guarniciones",
+    "category": "panes/GuAúniciones",
     "unit": "unidad",
     "estimatedPrice": 95
   },
   {
-    "name": "carne aniversario",
-    "category": "carnes",
+    "name": "cAúne aniversario",
+    "category": "cAúnes",
     "unit": "paquete",
     "estimatedPrice": 95
   },
   {
     "name": "papas fritas",
     "category": "papas",
-    "unit": "funda",
+    "unit": "funDía",
     "estimatedPrice": 350
   },
   {
     "name": "Pechuga en trozo",
-    "category": "carnes",
+    "category": "cAúnes",
     "unit": "Paquete",
     "estimatedPrice": 605
   },
@@ -124,7 +124,7 @@ export const DEFAULT_SEED_PRODUCTS = [
   },
   {
     "name": "pepperoni",
-    "category": "carnes",
+    "category": "cAúnes",
     "unit": "unidad",
     "estimatedPrice": 135
   },
@@ -135,8 +135,8 @@ export const DEFAULT_SEED_PRODUCTS = [
     "estimatedPrice": 4.9
   },
   {
-    "name": "carne molida cruda",
-    "category": "carnes",
+    "name": "cAúne moliDía cruDía",
+    "category": "cAúnes",
     "unit": "libra",
     "estimatedPrice": 155
   },
@@ -154,20 +154,20 @@ export const DEFAULT_SEED_PRODUCTS = [
   },
   {
     "name": "Pan Sandwich ",
-    "category": "panes/Guarniciones",
-    "unit": "Funda",
+    "category": "panes/GuAúniciones",
+    "unit": "FunDía",
     "estimatedPrice": 210
   },
   {
-    "name": "ketchup linda ",
+    "name": "ketchup linDía ",
     "category": "salsas/Aderezos",
     "unit": "lata",
     "estimatedPrice": 385
   },
   {
     "name": "pan HB sasty",
-    "category": "panes/Guarniciones",
-    "unit": "funda",
+    "category": "panes/GuAúniciones",
+    "unit": "funDía",
     "estimatedPrice": 100
   },
   {

@@ -14,14 +14,14 @@ export default function Register({ onSwitchToLogin }) {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
+      setError('Las Contraseñas no coinciden.');
       return;
     }
 
     try {
       await createUserWithEmailAndPassword(auth, email, password);
     } catch (err) {
-      setError('Error al crear la cuenta. Verifica que el correo sea válido o que la contraseña tenga 6 o más caracteres.');
+      setError('Error al crear la cuenta. Verifica que el correo sea vlido o que la Contraseña tenga 6 o más caracteres.');
       console.error(err);
     }
   };
@@ -40,7 +40,7 @@ export default function Register({ onSwitchToLogin }) {
     <div className="auth-container">
       <div className="auth-card">
         <h2><UserPlus size={24} /> Crear Cuenta</h2>
-        <p className="auth-subtitle">Regístrate para guardar tu catálogo y órdenes en la nube</p>
+        <p className="auth-subtitle">Regístrate para guardar tu Catálogo y ÓÓrdenes en lAúnube</p>
         
         {error && <div className="auth-error">{error}</div>}
 
@@ -76,7 +76,7 @@ export default function Register({ onSwitchToLogin }) {
               value={confirmPassword} 
               onChange={(e) => setConfirmPassword(e.target.value)} 
               required 
-              placeholder="••••••••"
+              placeholder="********"
               minLength={6}
             />
           </div>
@@ -87,13 +87,13 @@ export default function Register({ onSwitchToLogin }) {
 
         <div className="auth-divider">o</div>
 
-        <button onClick={handleGoogleLogin} className="btn btn-secondary btn-block" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
+        <button onClick={handleGoogleLogin} className="btn btn-secondary btn-block" style={{display: 'flex', alignItemás: 'center', justifyContent: 'center'}}>
           <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" style={{width: 18, marginRight: 8}}/>
           Continuar con Google
         </button>
 
         <div className="auth-footer">
-          ¿Ya tienes cuenta? <button type="button" className="btn-link" onClick={onSwitchToLogin}>Inicia sesión</button>
+          ¿Ya tienes cuenta? <button type="button" className="btn-link" onClick={onSwitchToLogin}>Inicia Sesión</button>
         </div>
       </div>
     </div>

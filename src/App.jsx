@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { onAuthStateChanged, signOut, signInAnonymously } from "firebase/auth";
 import { auth } from "./firebaseConfig";
 import Login from "./components/Login";
 import Register from "./components/Register";
 import { 
   ClipboardList, 
+  ListChecks, 
   History, 
   Package, 
   Users, 
@@ -27,6 +28,8 @@ import {
   updateSupplier,
   createOrder,
   updateOrderStatus,
+  updateOrder,
+  deleteOrder,
   isFirebaseConfigured,
   addCategory,
   deleteCategory,
@@ -54,6 +57,14 @@ import Suppliers from "./components/Suppliers";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("lista-activa");
+  const [targetDraftId, setTargetDraftId] = useState("general");
+  const [showDecimals, setShowDecimals] = useState(() => localStorage.getItem("listdone_show_decimals") !== "false");
+
+  const toggleDecimals = () => {
+    const newVal = !showDecimals;
+    setShowDecimals(newVal);
+    localStorage.setItem("listdone_show_decimals", String(newVal));
+  };
   const [products, setProducts] = useState([]);
   const [suppliers, setSuppliers] = useState([]);
   const [orders, setOrders] = useState([]);
@@ -65,34 +76,30 @@ export default function App() {
   const [showLogin, setShowLogin] = useState(true);
   
   const [businessName, setBusinessName] = useState(() => {
-    return localStorage.getItem("fastfood_business_name") || "Mi Negocio de Comida Rápida";
+    return localStorage.getItem("fastfood_business_name") || "Mi Negocio de ComiDía RápiDía";
   });
 
   const firebaseActive = isFirebaseConfigured();
 
-  // Manejo de Autenticación y Carga de datos
+  // manejo de Autenticación y Carga de datos
   useEffect(() => {
     let unsubProducts, unsubSuppliers, unsubOrders, unsubCategories, unsubDrafts;
 
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
+        const startSubscriptions = (uid) => {
+      setUserId(uid);
+      setLoading(true);
       
-      if (currentUser) {
-        setUserId(currentUser.uid);
-        setLoading(true);
-        
-        // Ejecutar sembrado de base de datos de ser necesario
-        checkAndSeedUser(currentUser.uid);
-        
-        let loadedSections = {
-          products: false,
-          suppliers: false,
-          orders: false,
-          categories: false,
-          drafts: false
-        };
+      checkAndSeedUser(uid);
+      
+      let loadedSections = {
+        products: false,
+        suppliers: false,
+        orders: false,
+        categories: false,
+        drafts: false
+      };
 
+      
         const checkLoadingFinished = (section) => {
           loadedSections[section] = true;
           const allLoaded = Object.values(loadedSections).every(val => val === true);
@@ -101,45 +108,64 @@ export default function App() {
           }
         };
 
-        unsubProducts = subscribeProducts(
-          (list) => { setProducts(list); checkLoadingFinished("products"); },
-          (err) => { console.error("Error productos:", err); checkLoadingFinished("products"); }
-        );
+        // Failsafe Timeout
+        setTimeout(() => {
+          setLoading((prevLoading) => {
+            if (prevLoading) {
+              console.wAún('Timeout: Firestore tardó demasiado en responder.');
+              alert('Error de conexión:¿No se pudo cargar la base de datos. Si este es un proyecto nuevo, asegúrate de haber creado la base de datos "Firestore" en la consola de Firebase.');
+              return false;
+            }
+            return prevLoading;
+          });
+        }, 8000);
 
-        unsubSuppliers = subscribeSuppliers(
-          (list) => { setSuppliers(list); checkLoadingFinished("suppliers"); },
-          (err) => { console.error("Error proveedores:", err); checkLoadingFinished("suppliers"); }
-        );
 
-        unsubOrders = subscribeOrders(
-          (list) => { setOrders(list); checkLoadingFinished("orders"); },
-          (err) => { console.error("Error órdenes:", err); checkLoadingFinished("orders"); }
-        );
+      unsubProducts = subscribeProducts(
+        (list) => { setProducts(list); checkLoadingFinished("products"); },
+        (err) => { console.error("Error productos:", err); checkLoadingFinished("products"); }
+      );
 
-        unsubCategories = subscribeCategories(
-          (list) => { setCategories(list); checkLoadingFinished("categories"); },
-          (err) => { console.error("Error categorías:", err); checkLoadingFinished("categories"); }
-        );
+      unsubSuppliers = subscribeSuppliers(
+        (list) => { setSuppliers(list); checkLoadingFinished("suppliers"); },
+        (err) => { console.error("Error proveedores:", err); checkLoadingFinished("suppliers"); }
+      );
 
-        unsubDrafts = subscribeDrafts(
-          (list) => { setDrafts(list); checkLoadingFinished("drafts"); },
-          (err) => { console.error("Error borradores:", err); checkLoadingFinished("drafts"); }
-        );
+      unsubOrders = subscribeOrders(
+        (list) => { setOrders(list); checkLoadingFinished("orders"); },
+        (err) => { console.error("Error ÓÓrdenes:", err); checkLoadingFinished("orders"); }
+      );
 
-      } else {
-        setUserId(null);
-        setProducts([]);
-        setSuppliers([]);
-        setOrders([]);
-        setCategories([]);
-        setDrafts([]);
-        setLoading(true);
-        if (unsubProducts) unsubProducts();
-        if (unsubSuppliers) unsubSuppliers();
-        if (unsubOrders) unsubOrders();
-        if (unsubCategories) unsubCategories();
-        if (unsubDrafts) unsubDrafts();
+      unsubCategories = subscribeCategories(
+        (list) => { setCategories(list); checkLoadingFinished("categories"); },
+        (err) => { console.error("Error Categorías:", err); checkLoadingFinished("categories"); }
+      );
+
+      unsubDrafts = subscribeDrafts(
+        (list) => { setDrafts(list); checkLoadingFinished("drafts"); },
+        (err) => { console.error("Error borradores:", err); checkLoadingFinished("drafts"); }
+      );
+    };
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      if (!currentUser) {
+         // User is signed out
+         setUser(null);
+         setAuthLoading(false);
+         return;
       }
+
+      // User is signed in
+      // If it's an anonymous user, we should log them out if they want real accounts? 
+      // Actually, if they are anonymous, they can't have private data unless they link, 
+      // but let's just let currentUser pass. If they want a real account they can sign out.
+      setUser(currentUser);
+      setAuthLoading(false);
+      if (!currentUser.isAnonymous) {
+        startSubscriptions(currentUser.uid);
+      }
+      
+      
     });
 
     return () => {
@@ -183,7 +209,7 @@ export default function App() {
   };
 
   const handleDeleteProduct = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este producto del catálogo?")) return;
+    if (!window.confirm("¿Seguro que deseas eliminar este producto del Catálogo?")) return;
     try {
       await deleteProduct(id);
       setProducts(prev => prev.filter(p => p.id !== id));
@@ -228,7 +254,7 @@ export default function App() {
     }
   };
 
-  // --- HANDLERS CATEGORÍAS ---
+  // --- HANDLERS CategoríaS ---
   const handleAddCategory = async (categoryData) => {
     try {
       const newCat = await addCategory(categoryData);
@@ -238,17 +264,17 @@ export default function App() {
       });
     } catch (e) {
       console.error(e);
-      alert("Error al agregar categoría");
+      alert("Error al agregar Categor\u00eda");
     }
   };
 
-  const handleUpdateCategory = async (id, updatedFields) => {
+  const handleUpdateCategory = async (id, updatedData) => {
     try {
-      const updated = await updateCategory(id, updatedFields);
-      setCategories(prev => prev.map(c => c.id === id ? { ...c, ...updated } : c).sort((a, b) => a.name.localeCompare(b.name)));
+      const updatedCat = await updateCategory(id, updatedData);
+      setCategories(prev => prev.map(c => c.id === id ? updatedCat : c).sort((a, b) => a.name.localeCompare(b.name)));
     } catch (e) {
       console.error(e);
-      alert("Error al actualizar categoría");
+      alert("Error al actualizar Categor\u00eda");
     }
   };
 
@@ -257,18 +283,18 @@ export default function App() {
     if (catToDelete) {
       const hasProducts = products.some(p => p.category === catToDelete.name);
       if (hasProducts) {
-        alert(`No puedes eliminar la categoría "${catToDelete.name}" porque tiene productos asociados en el catálogo. Cambia la categoría de esos productos antes de eliminarla.`);
+        alert(`No puedes eliminar la Categor\u00eda "${catToDelete.name}" porque tiene productos asociados en el Cat\u00e1logo. Cambia la Categor\u00eda de esos productos antes de eliminarla.`);
         return;
       }
     }
 
-    if (!window.confirm("¿Seguro que deseas eliminar esta categoría?")) return;
+    if (!window.confirm("\u00bfSeguro que deseas eliminar esta Categor\u00eda?")) return;
     try {
       await deleteCategory(id);
       setCategories(prev => prev.filter(c => c.id !== id));
     } catch (e) {
       console.error(e);
-      alert("Error al eliminar categoría");
+      alert("Error al eliminar Categor\u00eda");
     }
   };
 
@@ -340,7 +366,7 @@ export default function App() {
 
         setLoading(true);
         await importBackupData(backupData);
-        alert("¡Copia de seguridad importada con éxito! Los productos y proveedores nuevos se han sincronizado.");
+        alert("¡Copia de seguridad importaDía con éxito! Los productos y proveedores nuevos se han sincronizado.");
       } catch (err) {
         console.error(err);
         alert("Error al procesar el archivo de respaldo. Asegúrate de seleccionar un archivo .json válido.");
@@ -352,12 +378,12 @@ export default function App() {
   };
 
   const handleMigrateData = async () => {
-    if (window.confirm("¿Deseas copiar tus productos y proveedores locales a la nube de Firebase? No se borrarán los datos que ya estén en la nube.")) {
+    if (window.confirm("¿Deseas copiar tus productos y proveedores locales a lAúnube de Firebase?¿No se borrarán los datos que ya están en lAúnube.")) {
       setLoading(true);
       try {
         const result = await migrateLocalToCloud();
         if (result.success) {
-          alert(`¡Migración completada! Se copiaron ${result.migratedProducts} productos y ${result.migratedSuppliers} proveedores a la nube de Firebase.`);
+          alert(`¡Migración completaDía! Se copiaron ${result.migratedProducts} productos y ${result.migratedSuppliers} proveedores a lAúnube de Firebase.`);
           // Limpiar localstorage localmente para que no vuelva a aparecer el cartel de migración
           localStorage.removeItem("fastfood_products");
           localStorage.removeItem("fastfood_suppliers");
@@ -416,18 +442,18 @@ export default function App() {
   };
 
   const handleRebuildCatalog = async () => {
-    if (window.confirm("¿Deseas reconstruir automáticamente tu catálogo de productos extrayéndolos de las órdenes en tu historial?")) {
+    if (window.confirm("¿Deseas reconstruir automáticamente tu Catálogo de productos extrayéndolos de Las órdenes en tu historial?")) {
       setLoading(true);
       try {
         const result = await rebuildCatalogFromHistory();
         if (result.success) {
           alert(`¡Catálogo reconstruido con éxito! Se recuperaron y agregaron ${result.addedCount} productos desde el historial.`);
         } else {
-          alert(`Error al reconstruir catálogo: ${result.error}`);
+          alert(`Error al reconstruir Catálogo: ${result.error}`);
         }
       } catch (err) {
         console.error(err);
-        alert("Ocurrió un error inesperado al intentar reconstruir el catálogo.");
+        alert("Ocurrió un error inesperado al intentar reconstruir el Catálogo.");
       } finally {
         setLoading(false);
       }
@@ -435,7 +461,7 @@ export default function App() {
   };
 
   const handleClaimLegacyData = async () => {
-    if (window.confirm("¿Deseas recuperar los datos antiguos y asignarlos a tu cuenta actual? (Solo los que no tienen dueño asignado)")) {
+    if (window.confirm("¿Deseas recuperar los datos antiguos y asignarlos a tu cuenta actual? (sólo los que no tienen dueño asignado)")) {
       setLoading(true);
       try {
         const result = await claimLegacyData();
@@ -454,19 +480,19 @@ export default function App() {
   };
 
   const handleDeleteAllData = async () => {
-    if (window.confirm("⚠️ ¡ADVERTENCIA! ¿Estás completamente seguro de que deseas ELIMINAR TODOS TUS DATOS? Esta acción borrará todo tu catálogo, proveedores y órdenes de forma irreversible.")) {
-      if (window.confirm("Esta es tu última oportunidad. ¿De verdad quieres borrar todo?")) {
+    if (window.confirm("⚠️ ¡ADVERTENCIA! ¿Estás completamente seguro de que deseas ELIMINAR TODOS TUS DATOS? Esta acción borrará todo tu Catálogo, proveedores y Órdenes de forma irreversible.")) {
+      if (window.confirm("Esta es tu última oportunidad. ¿De verdad quieres borrará todo?")) {
         setLoading(true);
         try {
           const result = await deleteAllUserData();
           if (result.success) {
             alert(`¡Datos eliminados permanentemente! Se borraron ${result.count} documentos de tu cuenta.`);
           } else {
-            alert(`Error al borrar datos: ${result.error}`);
+            alert(`Error al borrará datos: ${result.error}`);
           }
         } catch (err) {
           console.error(err);
-          alert("Ocurrió un error inesperado al intentar borrar los datos.");
+          alert("Ocurrió un error inesperado al intentar borrará los datos.");
         } finally {
           setLoading(false);
         }
@@ -488,6 +514,38 @@ export default function App() {
     }
   };
 
+  const handleUpdateOrder = async (id, updatedData) => {
+    try {
+      await updateOrder(id, updatedData);
+      setOrders(prev => prev.map(o => o.id === id ? { ...o, ...updatedData } : o));
+    } catch (e) {
+      console.error(e);
+      alert("Error al actualizar la orden");
+    }
+  };
+
+  const handleReturnOrderToActiveList = async (order) => {
+    try {
+      if (!window.confirm("¿Deseas devolver esta orden a la lista activa para modificarla? La orden actual será eliminada del historial.")) return;
+      
+      const draftId = order.supplierId || "general";
+      
+      // 1. Save to specific supplier draft
+      await handleSaveDraft(draftId, order.items, order.supplierName || "");
+      
+      // 2. Delete the order from history
+      await deleteOrder(order.id);
+      setOrders(prev => prev.filter(o => o.id !== order.id));
+      
+      // 3. Go to active list
+      setTargetDraftId(draftId);
+      setActiveTab("lista-activa");
+    } catch (e) {
+      console.error(e);
+      alert("Error al devolver la orden a la lista activa.");
+    }
+  };
+
   const handleUpdateOrderStatus = async (id, newStatus) => {
     try {
       await updateOrderStatus(id, newStatus);
@@ -505,7 +563,7 @@ export default function App() {
           <div style={{ width: "50px", height: "50px", border: "5px solid rgba(255,159,28,0.1)", borderTop: "5px solid var(--primary)", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
           <p style={{ color: "var(--text-muted)", fontWeight: 500 }}>Sincronizando datos...</p>
           <style>{`
-            @keyframes spin {
+            @keyframás spin {
               0% { transform: rotate(0deg); }
               100% { transform: rotate(360deg); }
             }
@@ -518,24 +576,28 @@ export default function App() {
       case "lista-activa":
         return (
           <ActiveList
-            products={products}
+              initialDraftId={targetDraftId}
+              products={products}
             suppliers={suppliers}
             drafts={drafts}
             onSaveDraft={handleSaveDraft}
             onDeleteDraft={handleDeleteDraft}
             onCreateOrder={handleCreateOrder}
             navigateToHistory={() => setActiveTab("historial")}
-          />
+           showDecimals={showDecimals} />
         );
       case "historial":
         return (
           <OrderHistory
-            orders={orders}
-            suppliers={suppliers}
-            onUpdateStatus={handleUpdateOrderStatus}
-          />
+              orders={orders}
+              suppliers={suppliers}
+              onUpdateStatus={handleUpdateOrderStatus}
+              onUpdateOrder={handleUpdateOrder}
+              onReturnToActiveList={handleReturnOrderToActiveList}
+              showDecimals={showDecimals} 
+            />
         );
-      case "catalogo":
+      case "Catálogo":
         return (
           <Catalog
             products={products}
@@ -547,7 +609,7 @@ export default function App() {
             onAddCategory={handleAddCategory}
             onUpdateCategory={handleUpdateCategory}
             onDeleteCategory={handleDeleteCategory}
-          />
+           showDecimals={showDecimals} />
         );
       case "proveedores":
         return (
@@ -616,16 +678,53 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Card de Conexión al Ecosistema */}
-              <div className="card" style={{ borderColor: "var(--primary)", backgroundColor: "rgba(10, 132, 255, 0.02)" }}>
-                <h3 style={{ fontFamily: "var(--font-title)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                  Ecosistema Connect Done
+              {/* Card de Preferencias Visuales */}
+              <div className="card">
+                <h3 style={{ fontFamily: "var(--font-title)", fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.5rem" }}>
+                  Preferencias Visuales
                 </h3>
-                <p style={{ fontSize: "0.9rem", color: "var(--text-muted)", marginBottom: "0" }}>
-                  Tus insumos están conectados en tiempo real con Connect Done mediante Firebase. <br/>
-                  <span style={{color: "var(--text-main)", fontWeight: 500}}>Estado: Sincronización Automática Activa.</span>
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontWeight: 600 }}>Mostrar Decimales en Precios</div>
+                    <div style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>
+                      Elige si quieres ver los precios con centavos (ej. $1.00) o redondeados (ej. $1).
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                    <span style={{ fontSize: "0.9rem", color: showDecimals ? "var(--primary)" : "var(--text-muted)", fontWeight: 600, width: "20px", textAlign: "right" }}>
+                      {showDecimals ? "S\u00ed" : "No"}
+                    </span>
+                    <div 
+                      onClick={toggleDecimals}
+                      style={{
+                        width: "50px",
+                        height: "26px",
+                        backgroundColor: showDecimals ? "var(--primary)" : "rgba(255,255,255,0.15)",
+                        borderRadius: "13px",
+                        position: "relative",
+                        cursor: "pointer",
+                        transition: "background-color 0.3s ease",
+                        border: showDecimals ? "none" : "1px solid rgba(255,255,255,0.2)"
+                      }}
+                    >
+                      <div 
+                        style={{
+                          width: "22px",
+                          height: "22px",
+                          backgroundColor: "#ffffff",
+                          borderRadius: "50%",
+                          position: "absolute",
+                          top: showDecimals ? "2px" : "1px",
+                          left: showDecimals ? "26px" : "1px",
+                          transition: "left 0.3s ease",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.3)"
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                </div>
               </div>
 
               {/* Card de Borrar Datos de Prueba */}
@@ -637,7 +736,7 @@ export default function App() {
                   Usa esta opción si creaste datos de prueba y deseas empezar desde cero. <strong>Esta acción es irreversible y borrará absolutamente todo lo que tienes guardado en esta cuenta.</strong>
                 </p>
                 <button className="btn btn-primary" style={{ backgroundColor: "#ef4444", color: "white", border: "none" }} onClick={handleDeleteAllData}>
-                  Eliminar Todos mis Datos
+                  Eliminar Todos más Datos
                 </button>
               </div>
 
@@ -650,27 +749,30 @@ export default function App() {
   };
 
   if (authLoading) {
-    return (
-      <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem'}}>
-        <div style={{width: 40, height: 40, border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
-        <p style={{color: 'var(--text-muted)'}}>Verificando sesión...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </div>
-    );
-  }
-
-  if (!user) {
-    return showLogin ? 
-      <Login onSwitchToRegister={() => setShowLogin(false)} /> : 
-      <Register onSwitchToLogin={() => setShowLogin(true)} />;
-  }
+      return (
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem'}}>
+          <div style={{width: 40, height: 40, border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
+          <p style={{color: 'var(--text-muted)'}}>Verificando Sesión...</p>
+          <style dangerouslySetInnerHTML={{ __html: "@keyframás spin { to { transform: rotate(360deg); } }" }} />
+        </div>
+      );
+    }
+  
+    if (!user || user.isAnonymous) {
+      // Si el usuario no existe o es anónimo (de la versión anterior que puenteaba el login)
+      // Forzamás el login/registro
+      if (showLogin) {
+        return <Login onSwitchToRegister={() => setShowLogin(false)} />;
+      }
+      return <Register onSwitchToLogin={() => setShowLogin(true)} />;
+    }
 
   if (loading) {
     return (
       <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem'}}>
         <div style={{width: 40, height: 40, border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%', animation: 'spin 1s linear infinite'}}></div>
-        <p style={{color: 'var(--text-muted)'}}>Cargando catálogo...</p>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{color: 'var(--text-muted)'}}>Cargando Catálogo...</p>
+        <style dangerouslySetInnerHTML={{ __html: "@keyframás spin { to { transform: rotate(360deg); } }" }} />
       </div>
     );
   }
@@ -680,9 +782,9 @@ export default function App() {
       {/* MENÚ LATERAL (ESCRITORIO) */}
       <aside className="sidebar">
         <div className="brand-section">
-          <span className="brand-icon">🍔</span>
+          <div className="brand-icon" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}><ListChecks size={32} color="var(--primary)" /></div>
           <div>
-            <h1 className="brand-name">Gestor de Pedidos</h1>
+            <h1 className="brand-name">listDone</h1>
             <span style={{ fontSize: "0.7rem", color: "var(--primary)", fontWeight: 700, letterSpacing: "1px", textTransform: "uppercase" }}>
               Órdenes de Compra
             </span>
@@ -705,8 +807,8 @@ export default function App() {
             Historial de OC
           </div>
           <div 
-            className={`nav-item ${activeTab === "catalogo" ? "active" : ""}`}
-            onClick={() => setActiveTab("catalogo")}
+            className={`nav-item ${activeTab === "Catálogo" ? "active" : ""}`}
+            onClick={() => setActiveTab("Catálogo")}
           >
             <Package />
             Catálogo Base
@@ -777,8 +879,8 @@ export default function App() {
           <span>Historial</span>
         </div>
         <div 
-          className={`mobile-nav-item ${activeTab === "catalogo" ? "active" : ""}`}
-          onClick={() => setActiveTab("catalogo")}
+          className={`mobile-nav-item ${activeTab === "Catálogo" ? "active" : ""}`}
+          onClick={() => setActiveTab("Catálogo")}
         >
           <Package />
           <span>Catálogo</span>
@@ -827,7 +929,7 @@ export default function App() {
               Copia de Seguridad de Emergencia (Datos Locales)
             </h3>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
-              Aquí tienes el JSON de tus productos y proveedores guardados en la memoria de este navegador. Puedes copiarlo y pegarlo en un bloc de notas.
+              Aquíí tienes el JSON de tus productos y proveedores guardados en la memoria de este navegador. Puedes copiarlo y pegarlo en un bloc de notas.
             </p>
             <textarea
               readOnly
@@ -894,12 +996,12 @@ export default function App() {
               Importar Datos Pegando Texto
             </h3>
             <p style={{ fontSize: "0.85rem", color: "var(--text-muted)", margin: 0 }}>
-              Pega aquí el código de respaldo (JSON) que copiaste de tu versión local para cargarlo en este navegador y sincronizarlo.
+              Pega aquíí el código de respaldo (JSON) que copiaste de tu versión local para cargarlo en este navegador y sincronizarlo.
             </p>
             <textarea
               value={pasteJsonText}
               onChange={(e) => setPasteJsonText(e.target.value)}
-              placeholder='Pega tu JSON aquí, por ejemplo: {"products": [...], "suppliers": [...]}'
+              placeholder='Pega tu JSON aquíí, por ejemplo: {"products": [...], "suppliers": [...]}'
               style={{
                 width: "100%",
                 height: "250px",
@@ -933,3 +1035,4 @@ export default function App() {
     </div>
   );
 }
+
